@@ -62,47 +62,54 @@ Client::Client(QWidget *parent)
     , tcpSocket(new QTcpSocket(this))
     , consoleLog(new QTextEdit)
     , clearConsoleButton(new QPushButton(tr("Clear")))
+    , fileDirLineEdit(new QLineEdit)
+    , browseButton (new QPushButton(tr("Browse...")))
 {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 //! [0]
     hostCombo->setEditable(true);
     // find out name of this machine
-    QString name = QHostInfo::localHostName();
-    if (!name.isEmpty()) {
-        hostCombo->addItem(name);
-        QString domain = QHostInfo::localDomainName();
-        if (!domain.isEmpty())
-            hostCombo->addItem(name + QChar('.') + domain);
-    }
-    if (name != QLatin1String("localhost"))
-        hostCombo->addItem(QString("localhost"));
-    // find out IP addresses of this machine
-    QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
-    // add non-localhost addresses
-    for (int i = 0; i < ipAddressesList.size(); ++i) {
-        if (!ipAddressesList.at(i).isLoopback())
-            hostCombo->addItem(ipAddressesList.at(i).toString());
-    }
-    // add localhost addresses
-    for (int i = 0; i < ipAddressesList.size(); ++i) {
-        if (ipAddressesList.at(i).isLoopback())
-            hostCombo->addItem(ipAddressesList.at(i).toString());
-    }
+//    QString name = QHostInfo::localHostName();
+//    if (!name.isEmpty()) {
+//        hostCombo->addItem(name);
+//        QString domain = QHostInfo::localDomainName();
+//        if (!domain.isEmpty())
+//            hostCombo->addItem(name + QChar('.') + domain);
+//    }
+//    if (name != QLatin1String("localhost"))
+//        hostCombo->addItem(QString("localhost"));
+//    // find out IP addresses of this machine
+//    QList<QHostAddress> ipAddressesList = QNetworkInterface::allAddresses();
+//    // add non-localhost addresses
+//    for (int i = 0; i < ipAddressesList.size(); ++i) {
+//        if (!ipAddressesList.at(i).isLoopback())
+//            hostCombo->addItem(ipAddressesList.at(i).toString());
+//    }
+//    // add localhost addresses
+//    for (int i = 0; i < ipAddressesList.size(); ++i) {
+//        if (ipAddressesList.at(i).isLoopback())
+//            hostCombo->addItem(ipAddressesList.at(i).toString());
+//    }
 
     hostCombo->addItem(QString("www.stroustrup.com")); //for temporary telnet testing, port 80.
 
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
-
+    portLineEdit->setText(QString("80"));
     auto hostLabel = new QLabel(tr("&Server name:"));
     hostLabel->setBuddy(hostCombo);
     auto portLabel = new QLabel(tr("S&erver port:"));
     portLabel->setBuddy(portLineEdit);
+    auto fileDirLabel = new QLabel(tr("Directory:"));
+    fileDirLabel->setBuddy(fileDirLineEdit);
 
     statusLabel = new QLabel(tr("This examples requires that you run the "
                                 "Fortune Server example as well."));
 
+
+    fileDirLineEdit->setText(QString(QDir::currentPath()));
+
     getFortuneButton->setDefault(true);
-    getFortuneButton->setEnabled(false);
+    getFortuneButton->setEnabled(true);
 
     auto quitButton = new QPushButton(tr("Quit"));
 
@@ -131,6 +138,8 @@ Client::Client(QWidget *parent)
 //! [4]
     connect(clearConsoleButton, &QAbstractButton::clicked,
             this, &Client::clearConsole);
+    connect(browseButton, &QAbstractButton::clicked,
+            this, &Client::openFileDialog);
 
     QGridLayout *mainLayout = nullptr;
     if (QGuiApplication::styleHints()->showIsFullScreen() || QGuiApplication::styleHints()->showIsMaximized()) {
@@ -149,14 +158,20 @@ Client::Client(QWidget *parent)
     }
     mainLayout->addWidget(hostLabel, 0, 0);
     mainLayout->addWidget(hostCombo, 0, 1);
+
     mainLayout->addWidget(portLabel, 1, 0);
     mainLayout->addWidget(portLineEdit, 1, 1);
-    mainLayout->addWidget(statusLabel, 2, 0, 1, 2);
-    mainLayout->addWidget(buttonBox, 3, 0, 1, 2);
-    mainLayout->addWidget(consoleLog,4,0);
-    mainLayout->addWidget(clearConsoleButton,4,1);
+
+    mainLayout->addWidget(fileDirLabel, 2, 0);
+    mainLayout->addWidget(fileDirLineEdit, 2, 1);
+    mainLayout->addWidget(browseButton,2,2);
+
+    mainLayout->addWidget(statusLabel, 3, 0, 1, 2);
+    mainLayout->addWidget(buttonBox, 4, 0, 1, 2);
+    mainLayout->addWidget(consoleLog,5,0);
+    mainLayout->addWidget(clearConsoleButton,5,1);
     setWindowTitle(QGuiApplication::applicationDisplayName());
-    portLineEdit->setFocus();
+//    portLineEdit->setFocus();
 
     QNetworkConfigurationManager manager;
     if (manager.capabilities() & QNetworkConfigurationManager::NetworkSessionRequired) {
@@ -176,7 +191,7 @@ Client::Client(QWidget *parent)
         networkSession = new QNetworkSession(config, this);
         connect(networkSession, &QNetworkSession::opened, this, &Client::sessionOpened);
 
-        getFortuneButton->setEnabled(false);
+        getFortuneButton->setEnabled(true);
         statusLabel->setText(tr("Opening network session."));
         networkSession->open();
     }
@@ -238,12 +253,32 @@ void Client::readFortune()
     if(dataString.contains("HTTP")){
         consoleLog->append("HTTP found!");
     }
+
+    //write to csv
+    double value1(10);
+    double value2(13.2);
+    QFile file("./file.csv");
+    if (file.open(QFile::WriteOnly|QFile::Append))
+    {
+    QTextStream stream(&file);
+    stream << value1 << "," << value2 << "\n"; // this writes first line with two columns
+    file.close();
+    }
+
 }
 //! [8]
 
 void Client::clearConsole()
 {
     consoleLog->clear();
+}
+
+void Client::openFileDialog()
+{
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                 "/home",
+                                                 QFileDialog::ShowDirsOnly
+                                                 | QFileDialog::DontResolveSymlinks);
 }
 
 //! [13]

@@ -79,6 +79,7 @@ private slots:
     void enableGetFortuneButton();
     void sessionOpened();
     void clearConsole();
+    void openFileDialog();
 
 private:
     QComboBox *hostCombo = nullptr;
@@ -93,6 +94,9 @@ private:
     QNetworkSession *networkSession = nullptr;
     QTextEdit *consoleLog = nullptr;
     QPushButton *clearConsoleButton = nullptr;
+
+    QLineEdit *fileDirLineEdit = nullptr;
+    QPushButton *browseButton = nullptr;
 };
 //! [0]
 

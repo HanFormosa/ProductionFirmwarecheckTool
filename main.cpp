@@ -54,7 +54,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QApplication::setApplicationDisplayName(Client::tr("Fortune Client"));
+    QApplication::setApplicationDisplayName(Client::tr("SA-1000HE Firmware Check Tool V0.83"));
     Client client;
     client.show();
     return app.exec();
