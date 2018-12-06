@@ -94,7 +94,7 @@ Client::Client(QWidget *parent)
 //    }
 
 //    hostCombo->addItem(QString("www.stroustrup.com")); //for temporary telnet testing, port 80.
-    hostCombo->addItem(QString("192.168.100.118")); //for temporary telnet testing, port 80.
+    hostCombo->addItem(QString("192.168.100.118")); //for temporary telnet testing, port 23.
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
     portLineEdit->setText(QString("23"));
     auto hostLabel = new QLabel(tr("&Server name:"));
@@ -106,6 +106,13 @@ Client::Client(QWidget *parent)
 
     statusLabel = new QLabel(tr("This examples requires that you run the "
                                 "Fortune Server example as well."));
+
+    QMenuBar* menuBar = new QMenuBar();
+    QMenu *fileMenu = new QMenu("File");
+    menuBar->addMenu(fileMenu);
+    fileMenu->addAction("Save");
+    auto *exit_action= fileMenu->addAction("Exit");
+
 
 
     fileDirLineEdit->setText(QString(QDir::currentPath()));
@@ -146,6 +153,11 @@ Client::Client(QWidget *parent)
             this, &Client::enterLogin);
     connect(pwdButton, &QAbstractButton::clicked,
             this, &Client::enterPwd);
+    connect(exit_action, &QAction::triggered,
+            [this](bool checked)
+            {
+              exitGame();
+            });
     QGridLayout *mainLayout = nullptr;
     if (QGuiApplication::styleHints()->showIsFullScreen() || QGuiApplication::styleHints()->showIsMaximized()) {
         auto outerVerticalLayout = new QVBoxLayout(this);
@@ -177,6 +189,7 @@ Client::Client(QWidget *parent)
     mainLayout->addWidget(clearConsoleButton,5,1);
     mainLayout->addWidget(loginButton,6,0);
     mainLayout->addWidget(pwdButton,6,1);
+    mainLayout->setMenuBar(menuBar);
     setWindowTitle(QGuiApplication::applicationDisplayName());
 //    portLineEdit->setFocus();
 
@@ -257,23 +270,72 @@ void Client::readFortune()
     QByteArray ba= tcpSocket->readAll();
     QString dataString (ba);
     consoleLog->append(dataString);
-    if(dataString.contains("HTTP")){
-        consoleLog->append("HTTP found!");
+unsigned int parsedValue[100];
+bool ok;
+    if(dataString.contains("fe fa 2f")){
+        consoleLog->append("found id!\r\n");
+//        for(int i =0;i<query.length();i++){
+//            parsedValue[i]= query[i].toUInt(&ok, 16);
+//        }
+        QByteArray text = QByteArray::fromHex(ba);
+        text.data();
+        QString textStr(text);
+        consoleLog->append(textStr);
+
+        QString subString = textStr.mid(4,4);
+        consoleLog->append("Firmware Version:" + subString);
+        if(subString == "1.30"){
+            consoleLog->append("PASS");
+        }else{
+            consoleLog->append("FAIL");
+        }
+
+        subString = textStr.mid(9,4);
+        consoleLog->append("Parameter Version:" + subString);
+        if(subString == "1.20"){
+            consoleLog->append("PASS");
+        }else{
+            consoleLog->append("FAIL");
+        }
+
+        subString = textStr.mid(14,12);
+        consoleLog->append("MAC Address:" + subString);
+        if(subString == "d410ec4f6b8f"){
+            consoleLog->append("PASS");
+        }else{
+            consoleLog->append("FAIL");
+        }
+
+        subString = textStr.mid(27,19);
+        consoleLog->append("Model Name:" + subString);
+        if(subString == "AU-HYB-M-1000e"){
+            consoleLog->append("PASS");
+        }else{
+            consoleLog->append("FAIL");
+        }
+//        QRegExp rx("(\\@)"); //RegEx for ' ' or ',' or '.' or ':' or '\t'
+//        QStringList query = textStr.split(rx);
+//        QString packedQ = query.join("");
     }
 
     //write to csv
-    double value1(10);
-    double value2(13.2);
-    QFile file("./file.csv");
-    if (file.open(QFile::WriteOnly|QFile::Append))
-    {
-    QTextStream stream(&file);
-    stream << value1 << "," << value2 << "\n"; // this writes first line with two columns
-    file.close();
-    }
+//    double value1(10);
+//    double value2(13.2);
+//    QFile file("./file.csv");
+//    if (file.open(QFile::WriteOnly|QFile::Append))
+//    {
+//    QTextStream stream(&file);
+//    stream << value1 << "," << value2 << "\n"; // this writes first line with two columns
+//    file.close();
+//    }
 
 }
 //! [8]
+
+
+void Client::exitGame(){
+ consoleLog->append("exiting game");
+}
 
 void Client::clearConsole()
 {
@@ -288,16 +350,23 @@ void Client::openFileDialog()
                                                  | QFileDialog::DontResolveSymlinks);
 }
 
-
+void delay(int n)
+{
+    QTime dieTime= QTime::currentTime().addSecs(n);
+    while (QTime::currentTime() < dieTime)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
 void Client::enterLogin(){
-    QString requestString = "episode\r\n";
+    QString requestString = "autonomic\r\n";
         QByteArray ba;
         ba.append(requestString);
+        tcpSocket->write(ba);
+        delay(1);
         tcpSocket->write(ba);
 }
 
 void Client::enterPwd(){
-    QString requestString = "FE C0 04 C2\r\n";
+    QString requestString = "FE FA 04 FC\r\n";
         QByteArray ba;
         ba.append(requestString);
         tcpSocket->write(ba);

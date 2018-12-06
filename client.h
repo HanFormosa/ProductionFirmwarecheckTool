@@ -82,6 +82,7 @@ private slots:
     void openFileDialog();
     void enterLogin();
     void enterPwd();
+    void exitGame();
 
 private:
     QComboBox *hostCombo = nullptr;
