@@ -80,6 +80,8 @@ private slots:
     void sessionOpened();
     void clearConsole();
     void openFileDialog();
+    void enterLogin();
+    void enterPwd();
 
 private:
     QComboBox *hostCombo = nullptr;
@@ -97,6 +99,8 @@ private:
 
     QLineEdit *fileDirLineEdit = nullptr;
     QPushButton *browseButton = nullptr;
+    QPushButton *loginButton = nullptr;
+    QPushButton *pwdButton = nullptr;
 };
 //! [0]
 

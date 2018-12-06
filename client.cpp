@@ -64,6 +64,8 @@ Client::Client(QWidget *parent)
     , clearConsoleButton(new QPushButton(tr("Clear")))
     , fileDirLineEdit(new QLineEdit)
     , browseButton (new QPushButton(tr("Browse...")))
+    , loginButton (new QPushButton(tr("Login")))
+    , pwdButton (new QPushButton(tr("Password")))
 {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 //! [0]
@@ -91,10 +93,10 @@ Client::Client(QWidget *parent)
 //            hostCombo->addItem(ipAddressesList.at(i).toString());
 //    }
 
-    hostCombo->addItem(QString("www.stroustrup.com")); //for temporary telnet testing, port 80.
-
+//    hostCombo->addItem(QString("www.stroustrup.com")); //for temporary telnet testing, port 80.
+    hostCombo->addItem(QString("192.168.100.118")); //for temporary telnet testing, port 80.
     portLineEdit->setValidator(new QIntValidator(1, 65535, this));
-    portLineEdit->setText(QString("80"));
+    portLineEdit->setText(QString("23"));
     auto hostLabel = new QLabel(tr("&Server name:"));
     hostLabel->setBuddy(hostCombo);
     auto portLabel = new QLabel(tr("S&erver port:"));
@@ -140,7 +142,10 @@ Client::Client(QWidget *parent)
             this, &Client::clearConsole);
     connect(browseButton, &QAbstractButton::clicked,
             this, &Client::openFileDialog);
-
+    connect(loginButton, &QAbstractButton::clicked,
+            this, &Client::enterLogin);
+    connect(pwdButton, &QAbstractButton::clicked,
+            this, &Client::enterPwd);
     QGridLayout *mainLayout = nullptr;
     if (QGuiApplication::styleHints()->showIsFullScreen() || QGuiApplication::styleHints()->showIsMaximized()) {
         auto outerVerticalLayout = new QVBoxLayout(this);
@@ -170,6 +175,8 @@ Client::Client(QWidget *parent)
     mainLayout->addWidget(buttonBox, 4, 0, 1, 2);
     mainLayout->addWidget(consoleLog,5,0);
     mainLayout->addWidget(clearConsoleButton,5,1);
+    mainLayout->addWidget(loginButton,6,0);
+    mainLayout->addWidget(pwdButton,6,1);
     setWindowTitle(QGuiApplication::applicationDisplayName());
 //    portLineEdit->setFocus();
 
@@ -208,9 +215,9 @@ void Client::requestNewFortune()
     tcpSocket->connectToHost(hostCombo->currentText(),
                              portLineEdit->text().toInt());
 //! [7]
- QString requestString ="GET /index.html HTTP/1.1\r\nhost: "+
-    hostCombo->currentText()+"\r\n\r\n";
-
+// QString requestString ="GET /index.html HTTP/1.1\r\nhost: "+
+//    hostCombo->currentText()+"\r\n\r\n";
+QString requestString = "";
     QByteArray ba;
     ba.append(requestString);
     tcpSocket->write(ba);
@@ -239,9 +246,9 @@ void Client::readFortune()
     getFortuneButton->setEnabled(true);
 
     quint16 bytes =  tcpSocket->bytesAvailable();
-    consoleLog->append("----------------------------------------");
-    consoleLog->append(QString::number(bytes)+ " for you to read");
-    consoleLog->append("----------------------------------------");
+//    consoleLog->append("----------------------------------------");
+//    consoleLog->append(QString::number(bytes)+ " for you to read");
+//    consoleLog->append("----------------------------------------");
 
     /*
     * When you read data from a socket ,data is also removed from the socket buffer space.
@@ -279,6 +286,21 @@ void Client::openFileDialog()
                                                  "/home",
                                                  QFileDialog::ShowDirsOnly
                                                  | QFileDialog::DontResolveSymlinks);
+}
+
+
+void Client::enterLogin(){
+    QString requestString = "episode\r\n";
+        QByteArray ba;
+        ba.append(requestString);
+        tcpSocket->write(ba);
+}
+
+void Client::enterPwd(){
+    QString requestString = "FE C0 04 C2\r\n";
+        QByteArray ba;
+        ba.append(requestString);
+        tcpSocket->write(ba);
 }
 
 //! [13]
