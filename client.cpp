@@ -65,7 +65,7 @@ Client::Client(QWidget *parent)
     , fileDirLineEdit(new QLineEdit)
     , browseButton (new QPushButton(tr("Browse...")))
     , loginButton (new QPushButton(tr("Login")))
-    , pwdButton (new QPushButton(tr("Password")))
+    , pwdButton (new QPushButton(tr("Test String")))
 {
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 //! [0]
